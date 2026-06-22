@@ -1,5 +1,5 @@
-import React, { useContext, useState, useCallback } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, TextInput, StyleSheet, SafeAreaView, KeyboardAvoidingView, Platform } from 'react-native';
+import React, { useContext, useState, useCallback, useRef, useEffect } from 'react';
+import { View, Text, Animated, Easing, ScrollView, TouchableOpacity, TextInput, StyleSheet, SafeAreaView, KeyboardAvoidingView, Platform } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { AppContext } from '../../App';
 
@@ -33,6 +33,16 @@ export default function ToolScreen({ route, navigation }) {
     else if (isOxygen) { footerVal = result.val; footerUnit = '%'; }
     else { footerVal = result.val || '0'; footerUnit = result.unit || ''; }
   }
+
+  const barAnim = useRef(new Animated.Value(1)).current;
+  const prevFooterOk = useRef(false);
+  useEffect(() => {
+    if (footerOk && !prevFooterOk.current) {
+      barAnim.setValue(0);
+      Animated.timing(barAnim, { toValue: 1, duration: 550, easing: Easing.out(Easing.cubic), useNativeDriver: true }).start();
+    }
+    prevFooterOk.current = footerOk;
+  }, [footerOk]);
 
   const accentRgb = tool.rgb;
   const accentColor = tool.color;
@@ -277,7 +287,13 @@ export default function ToolScreen({ route, navigation }) {
         </ScrollView>
 
         {/* STICKY FOOTER */}
-        <View style={[s.stickyFooter, { backgroundColor: footerOk ? accentColor : theme.s2, borderTopColor: theme.border }]}>
+        <Animated.View style={[s.stickyFooter, { backgroundColor: footerOk ? accentColor : theme.s2, borderTopColor: theme.border }, {
+          opacity: barAnim.interpolate({ inputRange: [0, 0.4, 1], outputRange: [0, 1, 1], extrapolate: 'clamp' }),
+          transform: [
+            { translateY: barAnim.interpolate({ inputRange: [0, 0.55, 0.78, 1], outputRange: [32, -6, 2, 0] }) },
+            { scale:      barAnim.interpolate({ inputRange: [0, 0.55, 0.78, 1], outputRange: [0.88, 1.03, 0.99, 1] }) },
+          ],
+        }]}>
           {footerOk ? (<>
             <View style={{ flex: 1 }}>
               <Text style={[s.stickyLabel, { color: 'rgba(0,0,0,0.6)' }]}>Result</Text>
@@ -287,7 +303,7 @@ export default function ToolScreen({ route, navigation }) {
           </>) : (
             <Text style={[s.stickyEmpty, { color: theme.muted }]}>Enter values above to calculate</Text>
           )}
-        </View>
+        </Animated.View>
 
       </KeyboardAvoidingView>
     </SafeAreaView>

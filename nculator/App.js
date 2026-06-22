@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useContext, createContext } from 'react';
+import React, { useState, useEffect, useRef, useContext, createContext } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createStackNavigator } from '@react-navigation/stack';
-import { Text, View, Platform } from 'react-native';
+import { Text, View, Animated, Easing, Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -22,6 +22,13 @@ export const AppContext = createContext({});
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
 
+const TAB_ANIM_CFG = {
+  Home:      { scaleFrom: 0.65, extraFrom:  5,   extraMid: -2 },
+  Tools:     { scaleFrom: 0.55, extraFrom: -15,  extraMid:  4 },
+  Reference: { scaleFrom: 0.6,  extraFrom: -40,  extraMid:  4 },
+  Settings:  { scaleFrom: 0.6,  extraFrom: -60,  extraMid:  6 },
+};
+
 function TabIcon({ name, focused, color }) {
   const icons = {
     Home: focused ? 'home' : 'home-outline',
@@ -29,9 +36,42 @@ function TabIcon({ name, focused, color }) {
     Reference: focused ? 'book-open-variant' : 'book-open-outline',
     Settings: focused ? 'cog' : 'cog-outline',
   };
+
+  const scale = useRef(new Animated.Value(1)).current;
+  const extra = useRef(new Animated.Value(0)).current;
+  const prevFocused = useRef(false);
+
+  useEffect(() => {
+    if (focused && !prevFocused.current) {
+      const cfg = TAB_ANIM_CFG[name];
+      scale.setValue(cfg.scaleFrom);
+      extra.setValue(cfg.extraFrom);
+      Animated.parallel([
+        Animated.spring(scale, { toValue: 1, tension: 200, friction: 14, useNativeDriver: true }),
+        Animated.sequence([
+          Animated.timing(extra, { toValue: cfg.extraMid, duration: 140, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
+          Animated.timing(extra, { toValue: 0,            duration: 120, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
+        ]),
+      ]).start();
+    }
+    prevFocused.current = focused;
+  }, [focused]);
+
+  const extraTransform = name === 'Home'
+    ? { translateY: extra }
+    : name === 'Reference'
+      ? { rotateX: extra.interpolate({ inputRange: [-40, 4], outputRange: ['-40deg', '4deg'], extrapolate: 'clamp' }) }
+      : { rotate: extra.interpolate({
+            inputRange: name === 'Settings' ? [-60, 6] : [-15, 4],
+            outputRange: name === 'Settings' ? ['-60deg', '6deg'] : ['-15deg', '4deg'],
+            extrapolate: 'clamp',
+          }) };
+
   return (
     <View style={{ alignItems: 'center' }}>
-      <MaterialCommunityIcons name={icons[name]} size={24} color={color} />
+      <Animated.View style={{ transform: [{ scale }, extraTransform] }}>
+        <MaterialCommunityIcons name={icons[name]} size={24} color={color} />
+      </Animated.View>
       {focused && <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: color, marginTop: 3 }} />}
     </View>
   );

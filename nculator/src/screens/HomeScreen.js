@@ -7,19 +7,113 @@ import { AppContext } from '../../App';
 import { TOOLS } from '../calculators';
 import TopBar from '../components/TopBar';
 
+const ICON_DURATIONS = {
+  dose: 850, drip: 550, pump: 650, weight: 600,
+  infusion: 700, convert: 750, oxygen: 650, titration: 800, cannula: 650,
+  creatinine: 500, reconstitution: 500, bsa: 500,
+};
+
+function getIconStyle(id, anim) {
+  switch (id) {
+    case 'dose':
+      return {
+        transform: [{ rotate: anim.interpolate({ inputRange: [0, 0.15, 0.35, 0.55, 0.72, 0.85, 1], outputRange: ['0deg', '-18deg', '14deg', '-8deg', '5deg', '-2deg', '0deg'] }) }],
+      };
+    case 'drip':
+      return {
+        opacity: anim.interpolate({ inputRange: [0, 0.15, 0.55], outputRange: [0, 0, 1], extrapolate: 'clamp' }),
+        transform: [
+          { translateY: anim.interpolate({ inputRange: [0, 0.55, 0.78, 1], outputRange: [-14, 5, -3, 0] }) },
+          { scale:      anim.interpolate({ inputRange: [0, 0.55, 0.78, 1], outputRange: [0.6, 1.1, 0.97, 1] }) },
+        ],
+      };
+    case 'pump':
+      return {
+        opacity: anim.interpolate({ inputRange: [0, 0.1, 0.7], outputRange: [0, 0, 1], extrapolate: 'clamp' }),
+        transform: [
+          { rotate: anim.interpolate({ inputRange: [0, 0.7, 1], outputRange: ['-30deg', '8deg', '0deg'] }) },
+          { scale:  anim.interpolate({ inputRange: [0, 0.7, 1], outputRange: [0.5, 1.08, 1] }) },
+        ],
+      };
+    case 'weight':
+      return {
+        opacity: anim.interpolate({ inputRange: [0, 0.1, 0.6], outputRange: [0, 0, 1], extrapolate: 'clamp' }),
+        transform: [
+          { translateY: anim.interpolate({ inputRange: [0, 0.6, 0.8, 1], outputRange: [-22, 7, -4, 0] }) },
+          { scale:      anim.interpolate({ inputRange: [0, 0.6, 0.8, 1], outputRange: [0.6, 1.1, 0.96, 1] }) },
+        ],
+      };
+    case 'infusion':
+      return {
+        opacity: anim.interpolate({ inputRange: [0, 0.1, 0.75], outputRange: [0, 0, 1], extrapolate: 'clamp' }),
+        transform: [
+          { rotate: anim.interpolate({ inputRange: [0, 0.75, 1], outputRange: ['-200deg', '8deg', '0deg'] }) },
+          { scale:  anim.interpolate({ inputRange: [0, 0.75, 1], outputRange: [0.5, 1.06, 1] }) },
+        ],
+      };
+    case 'convert':
+      return {
+        opacity: anim.interpolate({ inputRange: [0, 0.1, 0.65], outputRange: [0, 0, 1], extrapolate: 'clamp' }),
+        transform: [
+          { rotate: anim.interpolate({ inputRange: [0, 0.65, 1], outputRange: ['0deg', '390deg', '360deg'] }) },
+          { scale:  anim.interpolate({ inputRange: [0, 0.65, 1], outputRange: [0.5, 1.1, 1] }) },
+        ],
+      };
+    case 'oxygen':
+      return {
+        opacity: anim.interpolate({ inputRange: [0, 0.1, 0.55], outputRange: [0, 0, 1], extrapolate: 'clamp' }),
+        transform: [{ scale: anim.interpolate({ inputRange: [0, 0.55, 0.78, 1], outputRange: [0.4, 1.18, 0.94, 1] }) }],
+      };
+    case 'titration':
+      return {
+        opacity: anim.interpolate({ inputRange: [0, 0.1, 0.2], outputRange: [0, 0, 1], extrapolate: 'clamp' }),
+        transform: [{ scale: anim.interpolate({ inputRange: [0, 0.2, 0.35, 0.5, 0.65, 1], outputRange: [0.7, 1.25, 0.95, 1.15, 1, 1] }) }],
+      };
+    case 'cannula':
+      return {
+        opacity: anim.interpolate({ inputRange: [0, 0.1, 0.65], outputRange: [0, 0, 1], extrapolate: 'clamp' }),
+        transform: [
+          { translateX: anim.interpolate({ inputRange: [0, 0.65, 1], outputRange: [-28, 4, 0] }) },
+          { scale:      anim.interpolate({ inputRange: [0, 0.65, 1], outputRange: [0.7, 1.06, 1] }) },
+        ],
+      };
+    default:
+      return {
+        opacity: anim.interpolate({ inputRange: [0, 0.2, 0.6], outputRange: [0, 0, 1], extrapolate: 'clamp' }),
+        transform: [{ scale: anim.interpolate({ inputRange: [0, 0.6, 1], outputRange: [0.6, 1.1, 1] }) }],
+      };
+  }
+}
+
 export default function HomeScreen({ navigation }) {
   const { theme, recentTools, pinnedTools, addRecent } = useContext(AppContext);
   const s = styles(theme);
 
-  const opacity = useRef(new Animated.Value(0)).current;
+  const opacity    = useRef(new Animated.Value(0)).current;
   const translateY = useRef(new Animated.Value(10)).current;
+  const iconProgress = useRef(
+    Object.fromEntries(TOOLS.map(t => [t.id, new Animated.Value(0)]))
+  ).current;
 
   useFocusEffect(useCallback(() => {
     opacity.setValue(0);
     translateY.setValue(10);
+    TOOLS.forEach(t => iconProgress[t.id].setValue(0));
+
     Animated.parallel([
-      Animated.timing(opacity,     { toValue: 1, duration: 220, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
-      Animated.timing(translateY,  { toValue: 0, duration: 220, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
+      Animated.timing(opacity,    { toValue: 1, duration: 220, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
+      Animated.timing(translateY, { toValue: 0, duration: 220, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
+      Animated.sequence([
+        Animated.delay(80),
+        Animated.stagger(35, TOOLS.map(t =>
+          Animated.timing(iconProgress[t.id], {
+            toValue: 1,
+            duration: ICON_DURATIONS[t.id] ?? 500,
+            easing: Easing.out(Easing.cubic),
+            useNativeDriver: true,
+          })
+        )),
+      ]),
     ]).start();
   }, []));
 
@@ -30,7 +124,7 @@ export default function HomeScreen({ navigation }) {
   }, [pinnedTools, recentTools]);
 
   const featuredLabel = pinnedTools?.length ? 'Pinned' : recentTools?.length ? 'Recent' : 'Quick access';
-  const featured = featuredIds.map(id => TOOLS.find(t => t.id === id)).filter(Boolean);
+  const featured  = featuredIds.map(id => TOOLS.find(t => t.id === id)).filter(Boolean);
   const gridTools = TOOLS.filter(t => !featuredIds.includes(t.id));
 
   const openTool = (tool) => {
@@ -67,7 +161,9 @@ export default function HomeScreen({ navigation }) {
                 style={({ pressed }) => [s.featCard, { backgroundColor: theme.s2, borderColor: `rgba(${tool.rgb},0.3)` }, pressed && s.pressed]}
                 onPress={() => openTool(tool)}>
                 <View style={[s.featIcon, { backgroundColor: `rgba(${tool.rgb},0.18)` }]}>
-                  <MaterialCommunityIcons name={tool.icon} size={22} color={tool.color} />
+                  <Animated.View style={getIconStyle(tool.id, iconProgress[tool.id])}>
+                    <MaterialCommunityIcons name={tool.icon} size={22} color={tool.color} />
+                  </Animated.View>
                 </View>
                 <View style={s.featText}>
                   <Text style={[s.featName, { color: theme.text }]}>{tool.name}</Text>
@@ -92,7 +188,9 @@ export default function HomeScreen({ navigation }) {
                 style={({ pressed }) => [s.gridCard, { backgroundColor: theme.s2, borderColor: `rgba(${tool.rgb},0.2)` }, pressed && s.pressedGrid]}
                 onPress={() => openTool(tool)}>
                 <View style={[s.gridIconWrap, { backgroundColor: `rgba(${tool.rgb},0.15)` }]}>
-                  <MaterialCommunityIcons name={tool.icon} size={20} color={tool.color} />
+                  <Animated.View style={getIconStyle(tool.id, iconProgress[tool.id])}>
+                    <MaterialCommunityIcons name={tool.icon} size={20} color={tool.color} />
+                  </Animated.View>
                 </View>
                 <Text style={[s.gridName, { color: theme.text }]}>{tool.name}</Text>
                 <Text style={[s.gridDesc, { color: theme.muted }]}>{tool.desc}</Text>
