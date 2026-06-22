@@ -1,6 +1,8 @@
 name: Build Nculator APK
 on:
   workflow_dispatch:
+permissions:
+  contents: write
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -17,13 +19,34 @@ jobs:
         run: cd nculator && bash setup-eas.sh
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
-      - name: Show app.json projectId
-        run: cat nculator/app.json | python3 -c "import sys,json; d=json.load(sys.stdin); print(d['expo'].get('extra',{}))"
       - name: EAS account info
         run: cd nculator && eas whoami && eas project:info 2>&1 || echo "project:info failed"
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
-      - name: Build APK (no wait)
-        run: cd nculator && eas build --platform android --profile preview --non-interactive 2>&1
+      - name: Build APK
+        id: eas_build
+        run: |
+          OUTPUT=$(cd nculator && eas build --platform android --profile preview --non-interactive --wait 2>&1)
+          echo "$OUTPUT"
+          APK_URL=$(echo "$OUTPUT" | grep -oE 'https://expo\.dev/artifacts/eas/[A-Za-z0-9_./-]+\.apk' | tail -1)
+          echo "apk_url=$APK_URL" >> $GITHUB_OUTPUT
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+      - name: Download APK
+        run: |
+          APK_URL="${{ steps.eas_build.outputs.apk_url }}"
+          echo "Downloading APK from: $APK_URL"
+          curl -L "$APK_URL" -o nculator-preview.apk
+          ls -lh nculator-preview.apk
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ github.run_number }}
+          name: "Nculator v${{ github.run_number }}"
+          body: |
+            Android APK built from commit ${{ github.sha }}
+
+            Install by downloading `nculator-preview.apk` below.
+          files: nculator-preview.apk
+          draft: false
+          prerelease: false
