@@ -42,13 +42,17 @@ jobs:
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
         run: |
-          set -euo pipefail
+          set -uo pipefail
           OUTPUT=$(eas build \
             --platform ${{ inputs.platform }} \
             --profile preview \
             --non-interactive \
-            --wait 2>&1)
+            --wait 2>&1) || BUILD_FAILED=1
           echo "$OUTPUT"
+          if [ "${BUILD_FAILED:-0}" = "1" ]; then
+            echo "::error::EAS build failed — see output above (likely missing credentials)"
+            exit 1
+          fi
 
           # Try to extract artifact URL directly from EAS output
           ARTIFACT_URL=$(echo "$OUTPUT" | grep -oE 'https://expo\.dev/artifacts/eas/[^[:space:]"]+' | tail -1)
