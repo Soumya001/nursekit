@@ -1,6 +1,8 @@
 <div align="center">
 
-# 💊 Nculator
+<img src="nculator/assets/adaptive-icon.png" width="110" alt="Nculator logo" />
+
+# Nculator
 
 ### Clinical calculators for nurses and the wider clinical team
 
