@@ -1,65 +1,108 @@
-name: Build Nculator APK
+name: Build Nculator
+
 on:
   workflow_dispatch:
+    inputs:
+      platform:
+        description: 'Platform to build'
+        required: true
+        default: 'android'
+        type: choice
+        options:
+          - android
+          - ios
+
 permissions:
   contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-node@v4
         with:
           node-version: '18'
+
       - name: Install EAS CLI
         run: npm install -g eas-cli@latest
+
       - name: Install deps
         run: cd nculator && npm install --legacy-peer-deps
-      - name: Setup EAS project
-        run: cd nculator && bash setup-eas.sh
+
+      - name: Authenticate with EAS
+        run: cd nculator && eas whoami
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
-      - name: Build APK and get build ID
-        id: eas_build
+
+      - name: Build with EAS
+        id: build
+        working-directory: nculator
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
         run: |
-          OUTPUT=$(cd nculator && eas build --platform android --profile preview --non-interactive --wait 2>&1)
+          set -euo pipefail
+          OUTPUT=$(eas build \
+            --platform ${{ inputs.platform }} \
+            --profile preview \
+            --non-interactive \
+            --wait 2>&1)
           echo "$OUTPUT"
-          # Extract the EAS build UUID from the "See logs:" URL line
-          BUILD_ID=$(echo "$OUTPUT" | grep -oE '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}' | head -1)
-          echo "build_id=$BUILD_ID"
-          echo "build_id=$BUILD_ID" >> $GITHUB_OUTPUT
-        env:
-          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
-      - name: Get APK download URL from EAS
-        id: get_apk
+
+          # Try to extract artifact URL directly from EAS output
+          ARTIFACT_URL=$(echo "$OUTPUT" | grep -oE 'https://expo\.dev/artifacts/eas/[^[:space:]"]+' | tail -1)
+
+          # Fallback: query EAS GraphQL with the build UUID from the log URL
+          if [ -z "$ARTIFACT_URL" ]; then
+            BUILD_ID=$(echo "$OUTPUT" | grep -oE '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}' | head -1)
+            echo "GraphQL fallback for build $BUILD_ID"
+            RESPONSE=$(curl -s -X POST https://api.expo.dev/graphql \
+              -H "Content-Type: application/json" \
+              -H "Authorization: Bearer ${{ secrets.EXPO_TOKEN }}" \
+              -d "{\"query\":\"{ builds { byId(buildId: \\\"$BUILD_ID\\\") { artifacts { applicationArchiveUrl } } } }\"}")
+            echo "GraphQL response: $RESPONSE"
+            ARTIFACT_URL=$(echo "$RESPONSE" | \
+              grep -oE '"applicationArchiveUrl":"[^"]*"' | \
+              sed 's/"applicationArchiveUrl":"//;s/"$//')
+          fi
+
+          echo "artifact_url=$ARTIFACT_URL" >> $GITHUB_OUTPUT
+          echo "Final artifact URL: $ARTIFACT_URL"
+
+      - name: Set platform metadata
+        id: meta
         run: |
-          BUILD_ID="${{ steps.eas_build.outputs.build_id }}"
-          echo "Querying EAS for build $BUILD_ID"
-          RESPONSE=$(curl -s -X POST https://api.expo.dev/graphql \
-            -H "Content-Type: application/json" \
-            -H "Authorization: Bearer ${{ secrets.EXPO_TOKEN }}" \
-            -d "{\"query\":\"query { builds { byId(buildId: \\\"$BUILD_ID\\\") { status artifacts { applicationArchiveUrl } } } }\"}")
-          echo "EAS response: $RESPONSE"
-          APK_URL=$(echo "$RESPONSE" | grep -oE '"applicationArchiveUrl":"[^"]*"' | sed 's/"applicationArchiveUrl":"//;s/"$//')
-          echo "APK URL: $APK_URL"
-          echo "apk_url=$APK_URL" >> $GITHUB_OUTPUT
-      - name: Download APK
+          if [ "${{ inputs.platform }}" = "ios" ]; then
+            echo "ext=ipa"        >> $GITHUB_OUTPUT
+            echo "label=iOS IPA"  >> $GITHUB_OUTPUT
+          else
+            echo "ext=apk"           >> $GITHUB_OUTPUT
+            echo "label=Android APK" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Download artifact
         run: |
-          APK_URL="${{ steps.get_apk.outputs.apk_url }}"
-          echo "Downloading from: $APK_URL"
-          curl -fL "$APK_URL" -o nculator-preview.apk
-          ls -lh nculator-preview.apk
+          ARTIFACT_URL="${{ steps.build.outputs.artifact_url }}"
+          EXT="${{ steps.meta.outputs.ext }}"
+          echo "Downloading from: $ARTIFACT_URL"
+          curl -fL "$ARTIFACT_URL" -o "nculator-preview.$EXT"
+          ls -lh "nculator-preview.$EXT"
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v${{ github.run_number }}
-          name: "Nculator v${{ github.run_number }}"
+          tag_name: ${{ inputs.platform }}-v${{ github.run_number }}
+          name: "Nculator ${{ steps.meta.outputs.label }} v${{ github.run_number }}"
           body: |
-            Android APK — built automatically by EAS Build.
+            **${{ steps.meta.outputs.label }}** built automatically by EAS Build.
 
-            **Download** `nculator-preview.apk` below and install it on your Android device.
+            Download the file below and install it on your device.
+
+            > **Android:** enable "Install from unknown sources" then open the `.apk`
+            > **iOS:** requires your device UDID to be registered — install via AltStore or Apple Configurator
 
             Built from commit ${{ github.sha }}
-          files: nculator-preview.apk
+          files: nculator-preview.${{ steps.meta.outputs.ext }}
           draft: false
           prerelease: false
