@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <script src="./support.js"></script>
 </head>
 <body>
@@ -23,6 +23,8 @@
 <style>
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
   html,body{margin:0;height:100%;-webkit-text-size-adjust:100%;background:#000;overscroll-behavior:none;}
+  :root{--app-height:100svh;}
+  @supports not (height:100svh){:root{--app-height:100vh;}}
   .ms{font-family:'Material Symbols Rounded';font-weight:normal;font-style:normal;line-height:1;letter-spacing:normal;text-transform:none;white-space:nowrap;word-wrap:normal;direction:ltr;-webkit-font-smoothing:antialiased;}
   ::-webkit-scrollbar{width:0;height:0;}
   input::placeholder{opacity:.38;}
@@ -651,7 +653,7 @@
   </sc-if>
 
   <!-- BOTTOM NAV -->
-  <nav style="flex:none;position:relative;z-index:45;display:flex;background:var(--nav-bg);border-top:1px solid var(--border);padding:6px 0 18px;">
+  <nav style="flex:none;position:relative;z-index:45;display:flex;background:var(--nav-bg);border-top:1px solid var(--border);padding:6px 0 max(18px,env(safe-area-inset-bottom));">
     <sc-for list="{{ navItems }}" as="nav" hint-placeholder-count="4">
       <button data-tab="{{ nav.id }}" onClick="{{ setTab }}" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;background:transparent;border:none;cursor:pointer;padding:6px 0;min-height:44px;">
         <span class="ms" style="{{ nav.iconStyle }}">{{ nav.icon }}</span>
