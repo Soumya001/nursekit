@@ -2,6 +2,7 @@ import React, { useContext, useState, useCallback, useRef, useEffect } from 'rea
 import { View, Text, Animated, Easing, ScrollView, TouchableOpacity, Pressable, TextInput, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { AppContext } from '../../App';
 
 const MONO = Platform.select({ ios: 'Courier', android: 'monospace' });
@@ -72,18 +73,29 @@ export default function ToolScreen({ route, navigation }) {
     <SafeAreaView style={[s.safe, { backgroundColor: theme.bg }]}>
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
 
-        {/* HEADER */}
-        <View style={[s.header, { borderBottomColor: theme.border }]}>
-          <TouchableOpacity style={[s.backBtn, { backgroundColor: theme.s2 }]} onPress={() => navigation.goBack()}>
-            <MaterialCommunityIcons name="chevron-left" size={26} color={theme.text} />
-          </TouchableOpacity>
-          <View style={[s.iconBadge, { backgroundColor: `rgba(${accentRgb},0.2)`, borderColor: `rgba(${accentRgb},0.4)` }]}>
-            <MaterialCommunityIcons name={tool.icon} size={22} color={accentColor} />
-          </View>
-          <View style={{ flex: 1 }}>
-            <Text style={[s.toolName, { color: theme.text }]}>{tool.name}</Text>
-            <Text style={[s.toolDesc, { color: theme.muted }]}>{tool.desc}</Text>
-          </View>
+        {/* CENTERED HERO HEADER */}
+        <View style={s.heroWrap}>
+          <LinearGradient
+            colors={[`rgba(${accentRgb},0.26)`, 'transparent']}
+            start={{ x: 0.5, y: 0 }} end={{ x: 0.5, y: 1 }}
+            style={s.heroGradient}>
+            <View style={s.heroBackRow}>
+              <TouchableOpacity style={s.backBtn} onPress={() => navigation.goBack()}>
+                <MaterialCommunityIcons name="arrow-left" size={22} color={theme.text} />
+              </TouchableOpacity>
+            </View>
+            <View style={s.heroCentered}>
+              <View style={[s.iconBadge, { ...(Platform.OS === 'web' ? { boxShadow: `0 0 0 1px rgba(${accentRgb},.4), 0 0 28px rgba(${accentRgb},.35), 0 0 56px rgba(${accentRgb},.14), inset 0 1px 0 rgba(255,255,255,.16)` } : { shadowColor: accentColor, shadowOpacity: 0.4, shadowRadius: 20, shadowOffset: { width: 0, height: 0 }, elevation: 8 }) }]}>
+                <LinearGradient
+                  colors={[`rgba(${accentRgb},0.32)`, `rgba(${accentRgb},0.16)`]}
+                  start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+                  style={s.iconBadgeGrad}>
+                  <MaterialCommunityIcons name={tool.icon} size={38} color={accentColor} />
+                </LinearGradient>
+              </View>
+              <Text style={[s.toolName, { color: theme.text }]}>{tool.name}</Text>
+            </View>
+          </LinearGradient>
         </View>
 
         <ScrollView style={s.scroll} contentContainerStyle={s.content} keyboardShouldPersistTaps="always" showsVerticalScrollIndicator={false}>
@@ -392,11 +404,14 @@ export default function ToolScreen({ route, navigation }) {
 
 const styles = (theme) => StyleSheet.create({
   safe: { flex: 1 },
-  header: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 16, paddingBottom: 14, borderBottomWidth: 1 },
-  backBtn: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
-  iconBadge: { width: 44, height: 44, borderRadius: 14, alignItems: 'center', justifyContent: 'center', borderWidth: 1 },
-  toolName: { fontSize: 17, fontWeight: '700', letterSpacing: -0.2 },
-  toolDesc: { fontSize: 12, marginTop: 2 },
+  heroWrap: { },
+  heroGradient: { paddingBottom: 4 },
+  heroBackRow: { flexDirection: 'row', paddingHorizontal: 14, paddingTop: 6, paddingBottom: 8 },
+  backBtn: { width: 42, height: 42, borderRadius: 21, backgroundColor: 'rgba(255,255,255,0.09)', alignItems: 'center', justifyContent: 'center' },
+  heroCentered: { alignItems: 'center', paddingHorizontal: 20, paddingBottom: 24 },
+  iconBadge: { width: 72, height: 72, borderRadius: 22, overflow: 'hidden' },
+  iconBadgeGrad: { width: 72, height: 72, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
+  toolName: { fontSize: 23, fontWeight: '700', letterSpacing: -0.3, marginTop: 14, textAlign: 'center' },
   scroll: { flex: 1 },
   content: { padding: 16, paddingBottom: 24 },
   banner: { flexDirection: 'row', gap: 11, padding: 14, borderRadius: 16, borderWidth: 1, marginBottom: 16, alignItems: 'flex-start' },
