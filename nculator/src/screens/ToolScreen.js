@@ -27,6 +27,8 @@ export default function ToolScreen({ route, navigation }) {
   const [values, setValues] = useState({});
   const [openDrop, setOpenDrop] = useState(null);
   const [titCheck, setTitCheck] = useState('');
+  const prevValid = useRef({});
+  const checkAnims = useRef({}).current;
   const s = styles(theme);
 
   const setValue = useCallback((key, val) => setValues(prev => ({ ...prev, [key]: val })), []);
@@ -163,11 +165,22 @@ export default function ToolScreen({ route, navigation }) {
                 );
               }
 
+              if (!checkAnims[field.key]) checkAnims[field.key] = new Animated.Value(isValid ? 1 : 0);
+              if (isValid && !prevValid.current[field.key]) {
+                checkAnims[field.key].setValue(0);
+                Animated.spring(checkAnims[field.key], { toValue: 1, tension: 300, friction: 10, useNativeDriver: true }).start();
+              }
+              prevValid.current[field.key] = isValid;
+
               return (
-                <View key={field.key} style={[s.fieldCard, { backgroundColor: theme.s2, borderColor, shadowColor, shadowOpacity: 1, shadowRadius: 8, elevation: 2 }]}>
+                <View key={field.key} style={[s.fieldCard, { backgroundColor: theme.s2, borderColor, shadowColor: isValid ? `rgba(${accentRgb},0.25)` : 'transparent', shadowOpacity: 1, shadowRadius: isValid ? 20 : 8, elevation: isValid ? 4 : 2 }]}>
                   <View style={s.fieldTop}>
                     <Text style={[s.fieldLabel, { color: theme.muted }]}>{field.label}</Text>
-                    {isValid && <Text style={{ color: accentColor, fontSize: 16 }}>✓</Text>}
+                    {isValid && (
+                      <Animated.View style={{ transform: [{ scale: checkAnims[field.key] }] }}>
+                        <MaterialCommunityIcons name="check-circle" size={18} color={accentColor} />
+                      </Animated.View>
+                    )}
                   </View>
                   <View style={s.fieldInputRow}>
                     <TextInput style={[s.fieldInput, { color: theme.text }]} value={val} onChangeText={v => setValue(field.key, v)}
