@@ -248,6 +248,7 @@ export default function HomeScreen({ navigation }) {
               <Pressable key={tool.id}
                 style={({ pressed }) => [s.gridCard, { backgroundColor: theme.s2, borderColor: `rgba(${tool.rgb},0.2)`, borderBottomColor: `rgba(${tool.rgb},0.35)`, shadowColor: `rgba(${tool.rgb},0.3)` }, pressed && s.pressedGrid]}
                 onPress={() => openTool(tool)}>
+                <View style={[s.dotPip, { backgroundColor: tool.color }]} />
                 <View style={[s.gridIconWrap, { backgroundColor: `rgba(${tool.rgb},0.16)`, borderColor: `rgba(${tool.rgb},0.25)` }]}>
                   <Animated.View style={getIconStyle(tool.id, iconProgress[tool.id])}>
                     <MaterialCommunityIcons name={tool.icon} size={20} color={tool.color} />
@@ -296,7 +297,8 @@ const styles = (theme) => StyleSheet.create({
   dividerLine: { flex: 1, height: 1 },
   dividerText: { fontSize: 10, fontWeight: '700', letterSpacing: 1.4, textTransform: 'uppercase', opacity: 0.45 },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
-  gridCard: { width: '47.5%', padding: 17, borderRadius: 20, borderWidth: 1, borderBottomWidth: 2.5, elevation: 3, shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.15, shadowRadius: 10 },
+  gridCard: { width: '47.5%', padding: 17, borderRadius: 20, borderWidth: 1, borderBottomWidth: 2.5, elevation: 3, shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.15, shadowRadius: 10, position: 'relative', overflow: 'hidden' },
+  dotPip: { position: 'absolute', top: 15, right: 15, width: 7, height: 7, borderRadius: 3.5 },
   gridIconWrap: { width: 44, height: 44, borderRadius: 14, alignItems: 'center', justifyContent: 'center', borderWidth: 1 },
   gridName: { fontSize: 14, fontWeight: '700', marginTop: 11, letterSpacing: -0.1 },
   gridDesc: { fontSize: 11, marginTop: 3, lineHeight: 15 },

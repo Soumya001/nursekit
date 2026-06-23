@@ -1,5 +1,6 @@
 import React, { useContext, useRef, useCallback } from 'react';
 import { View, Text, Animated, Easing, ScrollView, StyleSheet, Platform } from 'react-native';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { AppContext } from '../../App';
@@ -116,6 +117,12 @@ export default function ReferenceScreen() {
             </View>
           </SECTION>
 
+          {/* INFO CARD */}
+          <View style={[styles.infoCard, { backgroundColor: `rgba(76,141,255,0.08)`, borderColor: `rgba(76,141,255,0.15)` }]}>
+            <MaterialCommunityIcons name="information-outline" size={19} color="#4c8dff" style={{ marginTop: 1 }} />
+            <Text style={[styles.infoText, { color: theme.text }]}>SpO₂ targets and cannula gauge tool are available from the Home and Tools tabs — tap any tool card to open it.</Text>
+          </View>
+
         </ScrollView>
       </Animated.View>
     </SafeAreaView>
@@ -142,4 +149,6 @@ const styles = StyleSheet.create({
   spo2Sub: { fontSize: 11, marginTop: 4, lineHeight: 15 },
   warnNote: { margin: 12, marginTop: 4, padding: 13, borderRadius: 12 },
   warnNoteText: { fontSize: 12.5, lineHeight: 19 },
+  infoCard: { flexDirection: 'row', gap: 10, padding: 12, borderRadius: 14, borderWidth: 1, marginBottom: 14, alignItems: 'flex-start' },
+  infoText: { flex: 1, fontSize: 12.5, lineHeight: 19 },
 });

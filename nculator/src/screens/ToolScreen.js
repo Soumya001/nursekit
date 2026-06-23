@@ -85,6 +85,39 @@ export default function ToolScreen({ route, navigation }) {
 
         <ScrollView style={s.scroll} contentContainerStyle={s.content} keyboardShouldPersistTaps="always" showsVerticalScrollIndicator={false}>
 
+          {/* OXYGEN: SPO2 REFERENCE GRID */}
+          {isOxygen && (
+            <View style={{ marginBottom: 14 }}>
+              <Text style={[s.refGridLabel, { color: theme.muted }]}>Target ranges</Text>
+              <View style={s.refGrid}>
+                {[
+                  { label: 'General', range: '92–96%', sub: 'most adults · BTS/TSANZ', color: theme.accent },
+                  { label: 'COPD / at-risk', range: '88–92%', sub: 'hypercapnia risk', color: theme.warn },
+                  { label: 'Acutely ill', range: '94–98%', sub: 'sepsis, MI, stroke', color: theme.danger },
+                  { label: 'Paeds / neonate', range: '91–95%', sub: 'confirm per protocol', color: theme.muted },
+                ].map(t => (
+                  <View key={t.label} style={[s.refCard, { backgroundColor: theme.s2 }]}>
+                    <Text style={[s.refCardLabel, { color: t.color }]}>{t.label}</Text>
+                    <Text style={[s.refCardRange, { color: theme.text }]}>{t.range}</Text>
+                    <Text style={[s.refCardSub, { color: theme.muted }]}>{t.sub}</Text>
+                  </View>
+                ))}
+              </View>
+              <View style={[s.oxyWarn, { backgroundColor: theme.warnSoft }]}>
+                <MaterialCommunityIcons name="alert-outline" size={18} color={theme.warn} style={{ marginTop: 1 }} />
+                <Text style={[s.oxyWarnText, { color: theme.text }]}>Titrate to the lowest flow that achieves the target. <Text style={{ fontWeight: '700' }}>Hyperoxia is harmful.</Text> Confirm unclear orders with the prescriber.</Text>
+              </View>
+            </View>
+          )}
+
+          {/* CANNULA: INFO NOTE */}
+          {isCannula && (
+            <View style={[s.hintCard, { backgroundColor: `rgba(${accentRgb},0.08)`, borderColor: `rgba(${accentRgb},0.15)` }]}>
+              <MaterialCommunityIcons name="information-outline" size={17} color={accentColor} style={{ marginTop: 1 }} />
+              <Text style={[s.hintText, { color: theme.text }]}>Physical-ceiling sanity check — not a substitute for the calculated rate. Verify gauge on packaging; ISO colour coding is not mandated everywhere.</Text>
+            </View>
+          )}
+
           {/* HIGH-RISK BANNER */}
           {isTitration && (
             <View style={[s.banner, { backgroundColor: theme.dangerSoft, borderColor: theme.danger }]}>
@@ -352,6 +385,14 @@ const styles = (theme) => StyleSheet.create({
   fieldCard: { borderRadius: 18, borderWidth: 1, padding: 14, shadowOffset: { width: 0, height: 2 } },
   hintCard: { flexDirection: 'row', gap: 10, padding: 12, borderRadius: 16, borderWidth: 1, marginBottom: 14, alignItems: 'flex-start' },
   hintText: { flex: 1, fontSize: 12, lineHeight: 19 },
+  refGridLabel: { fontSize: 10, fontWeight: '700', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 10 },
+  refGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
+  refCard: { width: '47%', padding: 14, borderRadius: 14 },
+  refCardLabel: { fontSize: 10, fontWeight: '700', letterSpacing: 0.7, textTransform: 'uppercase' },
+  refCardRange: { fontSize: 26, fontWeight: '700', fontFamily: MONO, marginTop: 7, lineHeight: 30 },
+  refCardSub: { fontSize: 11, marginTop: 5, lineHeight: 15 },
+  oxyWarn: { flexDirection: 'row', gap: 10, padding: 13, borderRadius: 14, marginTop: 10, alignItems: 'flex-start' },
+  oxyWarnText: { flex: 1, fontSize: 12.5, lineHeight: 19 },
   fieldTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 },
   fieldLabel: { fontSize: 11, fontWeight: '700', letterSpacing: 0.8, textTransform: 'uppercase' },
   fieldInputRow: { flexDirection: 'row', alignItems: 'baseline', gap: 8 },
