@@ -404,7 +404,7 @@ export default function ToolScreen({ route, navigation }) {
 
 const styles = (theme) => StyleSheet.create({
   safe: { flex: 1 },
-  heroWrap: { },
+  heroWrap: { flexShrink: 0 },
   heroGradient: { paddingBottom: 4 },
   heroBackRow: { flexDirection: 'row', paddingHorizontal: 14, paddingTop: 6, paddingBottom: 8 },
   backBtn: { width: 42, height: 42, borderRadius: 21, backgroundColor: 'rgba(255,255,255,0.09)', alignItems: 'center', justifyContent: 'center' },
