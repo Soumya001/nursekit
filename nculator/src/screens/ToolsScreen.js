@@ -1,5 +1,6 @@
 import React, { useContext, useState, useRef, useCallback } from 'react';
-import { View, Text, Animated, Easing, ScrollView, Pressable, TextInput, StyleSheet, SafeAreaView } from 'react-native';
+import { View, Text, Animated, Easing, ScrollView, Pressable, TextInput, StyleSheet } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';

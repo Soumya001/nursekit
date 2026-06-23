@@ -1,5 +1,6 @@
 import React, { useContext, useRef, useCallback } from 'react';
-import { View, Text, Animated, Easing, ScrollView, StyleSheet, SafeAreaView } from 'react-native';
+import { View, Text, Animated, Easing, ScrollView, StyleSheet } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { AppContext } from '../../App';
 import TopBar from '../components/TopBar';

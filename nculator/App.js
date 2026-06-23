@@ -5,7 +5,7 @@ import { createStackNavigator } from '@react-navigation/stack';
 import { Text, View, Animated, Easing, Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { StatusBar } from 'expo-status-bar';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
@@ -32,7 +32,7 @@ const TAB_ANIM_CFG = {
 function TabIcon({ name, focused, color }) {
   const icons = {
     Home: focused ? 'home' : 'home-outline',
-    Tools: focused ? 'calculator' : 'calculator-outline',
+    Tools: focused ? 'calculator' : 'calculator-variant',
     Reference: focused ? 'book-open-variant' : 'book-open-outline',
     Settings: focused ? 'cog' : 'cog-outline',
   };
@@ -79,6 +79,8 @@ function TabIcon({ name, focused, color }) {
 
 function TabNavigator() {
   const { theme } = useContext(AppContext);
+  const insets = useSafeAreaInsets();
+  const bottomPad = Platform.OS === 'ios' ? 26 : 10 + insets.bottom;
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
@@ -87,8 +89,8 @@ function TabNavigator() {
           backgroundColor: theme.navBg,
           borderTopColor: theme.border,
           borderTopWidth: 1,
-          height: Platform.OS === 'ios' ? 88 : 64,
-          paddingBottom: Platform.OS === 'ios' ? 26 : 10,
+          height: Platform.OS === 'ios' ? 88 : 54 + insets.bottom,
+          paddingBottom: bottomPad,
           paddingTop: 10,
         },
         tabBarActiveTintColor: theme.accent,
